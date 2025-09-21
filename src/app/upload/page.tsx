@@ -70,6 +70,16 @@ export default function UploadPage() {
       if (response.ok) {
         setUploadStatus('Document processed successfully!')
         setUploadResult(data)
+        
+        // Store document data in sessionStorage for Q&A access
+        const documentData = {
+          fileName: data.fileName,
+          content: data.textPreview,
+          wordCount: data.wordCount,
+          charCount: data.charCount,
+          uploadDate: new Date().toISOString()
+        }
+        sessionStorage.setItem('uploadedDocument', JSON.stringify(documentData))
       } else {
         setUploadStatus(data.error || 'Upload failed. Please try again.')
       }
@@ -89,7 +99,7 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100">
       <Navigation />
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">

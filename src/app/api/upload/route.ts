@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Force this API route to use Node.js runtime (not Edge)
+export const runtime = 'nodejs'
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain']
 
@@ -7,27 +10,63 @@ async function extractTextFromFile(file: File): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer())
   
   try {
+    console.log(`Attempting to extract text from file: ${file.name}, type: ${file.type}, size: ${file.size}`)
+    
     switch (file.type) {
       case 'application/pdf':
-        // Dynamic import to avoid build issues
-        const pdfParse = (await import('pdf-parse')).default
-        const pdfData = await pdfParse(buffer)
-        return pdfData.text
+        try {
+          // Dynamic import to avoid build issues
+          console.log('Importing pdf-parse...')
+          const pdfParse = (await import('pdf-parse')).default
+          console.log('pdf-parse imported successfully, parsing PDF...')
+          
+          const pdfData = await pdfParse(buffer)
+          console.log(`PDF parsed successfully, extracted ${pdfData.text.length} characters`)
+          
+          if (!pdfData.text || pdfData.text.trim().length === 0) {
+            throw new Error('PDF appears to be empty or contains only images/scanned content')
+          }
+          
+          return pdfData.text
+        } catch (pdfError) {
+          console.error('PDF-specific error:', pdfError)
+          throw new Error(`PDF processing failed: ${pdfError instanceof Error ? pdfError.message : 'Unknown PDF error'}`)
+        }
         
       case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-        const mammoth = await import('mammoth')
-        const docxResult = await mammoth.extractRawText({ buffer })
-        return docxResult.value
+        try {
+          console.log('Importing mammoth for DOCX...')
+          const mammoth = await import('mammoth')
+          const docxResult = await mammoth.extractRawText({ buffer })
+          console.log(`DOCX parsed successfully, extracted ${docxResult.value.length} characters`)
+          return docxResult.value
+        } catch (docxError) {
+          console.error('DOCX-specific error:', docxError)
+          throw new Error(`DOCX processing failed: ${docxError instanceof Error ? docxError.message : 'Unknown DOCX error'}`)
+        }
         
       case 'text/plain':
-        return buffer.toString('utf-8')
+        const textContent = buffer.toString('utf-8')
+        console.log(`Plain text file processed, ${textContent.length} characters`)
+        return textContent
         
       default:
         throw new Error(`Unsupported file type: ${file.type}`)
     }
   } catch (error) {
-    console.error('Error extracting text from file:', error)
-    throw new Error('Failed to extract text from the document')
+    console.error('Detailed error extracting text from file:', error)
+    console.error('Error name:', error instanceof Error ? error.name : 'Unknown')
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown')
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    
+    // Re-throw the error with more context
+    if (error instanceof Error && error.message.includes('PDF processing failed')) {
+      throw error // Already has good context
+    } else if (error instanceof Error && error.message.includes('DOCX processing failed')) {
+      throw error // Already has good context
+    } else {
+      throw new Error(`Failed to extract text from the document: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 }
 

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     }
 
     // For now, we'll create a sample document summary since document upload isn't implemented yet
-    const samplePrompt = `You are ClearClause, a professional Legal AI Assistant specializing in document analysis.
+    const samplePrompt = `You are Lawgent, a professional Legal AI Assistant specializing in document analysis.
 
 Create a comprehensive legal document summary following this instruction: "${instruction}"
 

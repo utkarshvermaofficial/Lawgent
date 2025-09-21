@@ -1,6 +1,6 @@
-# ClearClause Legal AI Assistant - Next.js Application
+# Lawgent Legal AI Assistant - Next.js Application
 
-This is a Next.js web application for ClearClause, a legal AI assistant that provides document Q&A, summarization, and translation features using Google's Gemini API.
+This is a Next.js web application for Lawgent, a legal AI assistant that provides document Q&A, summarization, and translation features using Google's Gemini API.
 
 ## Project Structure
 - Built with Next.js 14+ and TypeScript

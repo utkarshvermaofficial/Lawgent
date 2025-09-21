@@ -4,10 +4,10 @@ import Features from '@/components/Features'
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="bg-white">
       <Navigation />
       <Hero />
       <Features />
-    </main>
+    </div>
   )
 }

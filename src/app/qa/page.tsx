@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navigation from '@/components/Navigation'
 
 interface Message {
@@ -10,10 +10,32 @@ interface Message {
   timestamp: Date
 }
 
+interface DocumentData {
+  fileName: string
+  content: string
+  wordCount: number
+  charCount: number
+  uploadDate: string
+}
+
 export default function QAPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [currentQuestion, setCurrentQuestion] = useState('')
   const [loading, setLoading] = useState(false)
+  const [documentData, setDocumentData] = useState<DocumentData | null>(null)
+
+  useEffect(() => {
+    // Load document data from sessionStorage on component mount
+    const storedDocument = sessionStorage.getItem('uploadedDocument')
+    if (storedDocument) {
+      try {
+        const parsedDocument = JSON.parse(storedDocument)
+        setDocumentData(parsedDocument)
+      } catch (error) {
+        console.error('Error parsing stored document:', error)
+      }
+    }
+  }, [])
 
   const addMessage = (role: 'user' | 'assistant', content: string) => {
     const newMessage: Message = {
@@ -40,7 +62,11 @@ export default function QAPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ 
+          question,
+          documentContent: documentData?.content,
+          documentFileName: documentData?.fileName
+        }),
       })
 
       if (response.ok) {
@@ -61,7 +87,7 @@ export default function QAPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100">
       <Navigation />
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
@@ -73,6 +99,40 @@ export default function QAPage() {
               Ask questions about legal topics and get expert guidance
             </p>
           </div>
+
+          {/* Document Context Indicator */}
+          {documentData && (
+            <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-green-800 font-medium">Document Context Available</p>
+                  <p className="text-green-600 text-sm">
+                    Analyzing: <span className="font-semibold">{documentData.fileName}</span> 
+                    <span className="ml-2 text-xs">({documentData.wordCount} words)</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!documentData && (
+            <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <p className="text-yellow-800 font-medium">No Document Context</p>
+                  <p className="text-yellow-600 text-sm">
+                    <a href="/upload" className="underline hover:text-yellow-800">Upload a document</a> to ask specific questions about it.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             {/* Chat Header */}

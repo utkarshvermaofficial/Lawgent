@@ -1,4 +1,4 @@
-# ClearClause - Legal AI Assistant
+# Lawgent
 
 A modern Next.js web application that provides AI-powered legal document analysis, including Q&A, summarization, and translation features.
 
